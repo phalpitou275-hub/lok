@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ប្រព័ន្ធប្រកាសសំឡេង (កែសម្រួលសំឡេង)</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Kantumruy Pro', 'Segoe UI', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            margin: 0;
+            padding: 20px 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: #1e293b;
+            border-radius: 20px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+            padding: 24px;
+            width: 100%;
+            max-width: 460px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+        h2 {
+            color: #38bdf8;
+            margin: 0 0 6px 0;
+            font-size: 21px;
+        }
+        .sub {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+        .role-grid {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .role-btn {
+            flex: 1;
+            padding: 12px 8px;
+            border-radius: 12px;
+            border: 2px solid #475569;
+            background: #0f172a;
+            color: #cbd5e1;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .role-btn.active {
+            border-color: #38bdf8;
+            background: #082f49;
+            color: #7dd3fc;
+        }
+        .card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 14px;
+            padding: 16px;
+            margin-top: 12px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            color: #cbd5e1;
+            margin-bottom: 6px;
+        }
+        input {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #475569;
+            background: #1e293b;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 15px;
+            margin-bottom: 12px;
+        }
+        button.action-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #0284c7;
+            color: white;
+            margin-bottom: 8px;
+        }
+        .btn-connect {
+            padding: 0 16px;
+            background: #16a34a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .btn-talk {
+            width: 150px;
+            height: 150px;
+            border-radius: 75px;
+            border: none;
+            background: #ef4444;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.35);
+            cursor: pointer;
+            user-select: none;
+            margin: 16px auto 8px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .btn-talk.speaking {
+            background: #22c55e !important;
+            transform: scale(0.95);
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .status-off { background: #7f1d1d; color: #fca5a5; }
+        .status-on { background: #14532d; color: #86efac; }
+        .log-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 10px;
+            height: 110px;
+            overflow-y: auto;
+            font-size: 12px;
+            text-align: left;
+            color: #94a3b8;
+            margin-top: 12px;
+        }
+        #audioContainer {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>✈️ ប្រព័ន្ធប្រកាសសំឡេង</h2>
+    <div class="sub">អ្នកនិយាយ & អ្នកទទួល/ស្តាប់ (ទូរស័ព្ទ & កុំព្យូទ័រ)</div>
+
+    <div id="loginBox" class="card">
+        <label>ជ្រើសរើសតួនាទីឧបករណ៍នេះ៖</label>
+        <div class="role-grid">
+            <button type="button" class="role-btn active" id="roleSenderBtn" onclick="selectRole('sender')">
+                🎙️ អ្នកនិយាយ<br><small>(អ្នកប្រកាស)</small>
+            </button>
+            <button type="button" class="role-btn" id="roleListenerBtn" onclick="selectRole('listener')">
+                🔊 អ្នកទទួល / ស្តាប់<br><small>(លីបាស/បន្ទប់)</small>
+            </button>
+        </div>
+
+        <label>ឈ្មោះរបស់អ្នក (Username):</label>
+        <input type="text" id="usernameInput" placeholder="ឧទាហរណ៍៖ ប្រធាន / បន្ទប់១">
+
+        <label>ID ផ្ទាល់ខ្លួនរបស់ឧបករណ៍នេះ (គ្មានដកឃ្លា):</label>
+        <input type="text" id="myIdInput" placeholder="ឧទាហរណ៍៖ mic1 ឬ room1">
+
+        <button type="button" class="action-btn" onclick="startSystem()">🚀 ចូលប្រើប្រព័ន្ធ</button>
+    </div>
+
+    <div id="radioBox" style="display: none;">
+        <div id="myInfo" style="font-size: 13px; color: #7dd3fc; margin-bottom: 6px;"></div>
+        <div id="connectionStatus" class="status-badge status-off">កំពុងរង់ចាំ...</div>
+
+        <div id="senderPanel" class="card">
+            <label>បញ្ចូល ID អ្នកទទួល / អ្នកស្តាប់៖</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="targetIdInput" placeholder="ឧទាហរណ៍៖ room1" style="margin-bottom: 0;">
+                <button type="button" class="btn-connect" onclick="connectToListener()">ភ្ជាប់</button>
+            </div>
+            <div style="font-size: 13px; color: #cbd5e1; margin-top: 8px;">
+                បានភ្ជាប់៖ <span id="connectedPeers"><i style="color:#64748b;">គ្មាន</i></span>
+            </div>
+
+            <div style="text-align: center;">
+                <button type="button" id="talkBtn" class="btn-talk"
+                        onmousedown="startSpeech(event)" onmouseup="stopSpeech(event)" onmouseleave="stopSpeech(event)"
+                        ontouchstart="startSpeech(event)" ontouchend="stopSpeech(event)" ontouchcancel="stopSpeech(event)">
+                    ✈️ ចុចនិយាយ<br><span style="font-size: 11px; font-weight: normal;">(Hold to Speak)</span>
+                </button>
+                <div style="font-size: 12px; color: #94a3b8;">
+                    ចុចឱ្យជាប់ (ឬ Spacebar លើ PC) ដើម្បីនិយាយ
+                </div>
+            </div>
+        </div>
+
+        <div id="listenerPanel" class="card" style="display: none; text-align: center;">
+            <p style="margin: 0 0 10px 0; font-size: 14px; color: #e2e8f0;">
+                ឧបករណ៍នេះកំពុងត្រៀម <b>ទទួល និងស្តាប់</b> សំឡេង។
+            </p>
+            <button type="button" class="action-btn" style="background: #4f46e5;" onclick="unlockAndTestSound()">
+                🔊 ចុចបើកសំឡេង & តេស្តកណ្ដឹង
+            </button>
+        </div>
+
+        <div class="log-box" id="logBox">[ប្រព័ន្ធ]: ត្រៀមរួចរាល់...</div>
+    </div>
+</div>
+
+<div id="audioContainer"></div>
+
+<script>
+    let selectedRole = 'sender';
+    let peer = null;
+    let rawMicStream = null;
+    let broadcastStream = null;
+    let audioCtx = null;
+    let chimeDestination = null;
+    let username = '';
+    let myId = '';
+    let isSpeaking = false;
+    const connectedMap = new Map();
+
+    const peerConfig = {
+        config: {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' }
+            ]
+        }
+    };
+
+    function selectRole(role) {
+        selectedRole = role;
+        document.getElementById('roleSenderBtn').classList.toggle('active', role === 'sender');
+        document.getElementById('roleListenerBtn').classList.toggle('active', role === 'listener');
+    }
+
+    function addLog(msg) {
+        const logBox = document.getElementById('logBox');
+        const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+        logBox.innerHTML += `<br>[${time}] ${msg}`;
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function ensureAudioContext() {
+        if (!audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContextClass();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().catch(() => {});
+        }
+    }
+
+    function setupSenderAudioPipeline(micStream) {
+        ensureAudioContext();
+        const micSource = audioCtx.createMediaStreamSource(micStream);
+        chimeDestination = audioCtx.createMediaStreamDestination();
+        micSource.connect(chimeDestination);
+        broadcastStream = chimeDestination.stream;
+    }
+
+    function playAirportChime(sendToRemote = true) {
+        ensureAudioContext();
+        if (!audioCtx) return;
+
+        const notes = [
+            { freq: 659.25, start: 0,    duration: 0.3 },
+            { freq: 523.25, start: 0.25, duration: 0.3 },
+            { freq: 783.99, start: 0.50, duration: 0.3 },
+            { freq: 659.25, start: 0.75, duration: 0.5 }
+        ];
+
+        const now = audioCtx.currentTime;
+
+        notes.forEach(note => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(note.freq, now + note.start);
+
+            gain.gain.setValueAtTime(0.001, now + note.start);
+            gain.gain.exponentialRampToValueAtTime(0.3, now + note.start + 0.03);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + note.start + note.duration);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            if (sendToRemote && chimeDestination) {
+                gain.connect(chimeDestination);
+            }
+
+            osc.start(now + note.start);
+            osc.stop(now + note.start + note.duration + 0.05);
+        });
+    }
+
+    function unlockAndTestSound() {
+        ensureAudioContext();
+        playAirportChime(false);
+        const audios = document.querySelectorAll('#audioContainer audio');
+        audios.forEach(a => {
+            a.muted = false;
+            a.volume = 1.0;
+            a.play().catch(err => addLog('សូមចុចម្តងទៀតដើម្បីបើកសំឡេង៖ ' + err.message));
+        });
+        addLog('បានដាស់ Speaker និងតេស្តសំឡេងកណ្ដឹងរួចរាល់!');
+    }
+
+    function updatePeersUI() {
+        const el = document.getElementById('connectedPeers');
+        const statusEl = document.getElementById('connectionStatus');
+        const ids = Array.from(connectedMap.keys());
+
+        if (selectedRole === 'sender') {
+            if (ids.length === 0) {
+                el.innerHTML = '<i style="color:#64748b;">គ្មាន</i>';
+                statusEl.innerText = 'មិនទាន់តភ្ជាប់ជាមួយអ្នកទទួល/ស្តាប់';
+                statusEl.className = 'status-badge status-off';
+            } else {
+                el.innerHTML = ids.map(id => `<span style="background:#1e293b;border:1px solid #475569;padding:2px 8px;border-radius:6px;margin:2px;display:inline-block;">🟢 ${id}</span>`).join('');
+                statusEl.innerText = `បានភ្ជាប់ ${ids.length} ឧបករណ៍`;
+                statusEl.className = 'status-badge status-on';
+            }
+        } else {
+            if (ids.length === 0) {
+                statusEl.innerText = 'កំពុងរង់ចាំអ្នកនិយាយភ្ជាប់មក...';
+                statusEl.className = 'status-badge status-off';
+            } else {
+                statusEl.innerText = `🟢 បានភ្ជាប់ជាមួយ (${ids.join(', ')})`;
+                statusEl.className = 'status-badge status-on';
+            }
+        }
+    }
+
+    async function startSystem() {
+        username = document.getElementById('usernameInput').value.trim();
+        myId = document.getElementById('myIdInput').value.trim().replace(/\s+/g, '');
+
+        if (!username || !myId) {
+            alert('សូមបញ្ចូល Username និង ID ផ្ទាល់ខ្លួនឱ្យបានត្រឹមត្រូវ!');
+            return;
+        }
+
+        ensureAudioContext();
+
+        try {
+            if (selectedRole === 'sender') {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    alert('Browser នេះមិនគាំទ្រមីក្រូហ្វូនទេ (ត្រូវបើកតាម localhost ឬ https)។');
+                    return;
+                }
+                rawMicStream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                    video: false
+                });
+                rawMicStream.getAudioTracks()[0].enabled = false;
+                setupSenderAudioPipeline(rawMicStream);
+            }
+
+            peer = new Peer(myId, peerConfig);
+
+            peer.on('open', (id) => {
+                document.getElementById('loginBox').style.display = 'none';
+                document.getElementById('radioBox').style.display = 'block';
+
+                const roleLabel = selectedRole === 'sender' ? 'អ្នកនិយាយ' : 'អ្នកទទួល / អ្នកស្តាប់';
+                document.getElementById('myInfo').innerText = `តួនាទី៖ ${roleLabel} | ឈ្មោះ៖ ${username} | ID៖ ${id}`;
+                document.getElementById('senderPanel').style.display = selectedRole === 'sender' ? 'block' : 'none';
+                document.getElementById('listenerPanel').style.display = selectedRole === 'listener' ? 'block' : 'none';
+
+                addLog(`ចូលប្រព័ន្ធជា ${roleLabel} (ID: ${id})`);
+            });
+
+            peer.on('call', (call) => {
+                addLog(`មានការហៅចូលពី ID: ${call.peer}`);
+                call.answer(selectedRole === 'sender' ? broadcastStream : undefined);
+                registerCall(call);
+            });
+
+            peer.on('error', (err) => {
+                if (err.type === 'unavailable-id') {
+                    alert('ID នេះកំពុងប្រើរួចហើយ! សូមដាក់ ID ថ្មី។');
+                } else if (err.type === 'peer-unavailable') {
+                    addLog('មិនឃើញ ID នេះ online ទេ (ត្រូវចុច "ចូលប្រើប្រព័ន្ធ" លើឧបករណ៍ម្ខាងទៀតសិន)។');
+                } else {
+                    addLog('កំហុស Peer៖ ' + err.type);
+                }
+            });
+
+        } catch (err) {
+            alert('មិនអាចចាប់ផ្តើមប្រព័ន្ធបានទេ៖ ' + err.message);
+        }
+    }
+
+    function connectToListener() {
+        const targetId = document.getElementById('targetIdInput').value.trim().replace(/\s+/g, '');
+        if (!targetId) {
+            alert('សូមបញ្ចូល ID អ្នកទទួល / អ្នកស្តាប់!');
+            return;
+        }
+        if (targetId === myId) {
+            alert('មិនអាចដាក់ ID ដូចខ្លួនឯងបានទេ!');
+            return;
+        }
+        if (!peer || !broadcastStream) {
+            addLog('សូមរង់ចាំ Peer ចូលប្រព័ន្ធឱ្យចប់សិន។');
+            return;
+        }
+
+        addLog(`កំពុងភ្ជាប់ទៅកាន់ ID: ${targetId}...`);
+        const call = peer.call(targetId, broadcastStream);
+        if (call) {
+            registerCall(call);
+        }
+        document.getElementById('targetIdInput').value = '';
+    }
+
+    function registerCall(call) {
+        const remoteId = call.peer;
+        connectedMap.set(remoteId, call);
+        updatePeersUI();
+
+        call.on('stream', (remoteStream) => {
+            addLog(`បានទទួលសំឡេង (Stream) ពី ${remoteId}!`);
+            let audioEl = document.getElementById('audio_' + remoteId);
+            if (!audioEl) {
+                audioEl = document.createElement('audio');
+                audioEl.id = 'audio_' + remoteId;
+                audioEl.autoplay = true;
+                audioEl.playsInline = true;
+                audioEl.muted = false;
+                audioEl.volume = 1.0;
+                document.getElementById('audioContainer').appendChild(audioEl);
+            }
+            audioEl.srcObject = remoteStream;
+            audioEl.play().then(() => {
+                addLog(`កំពុងបន្លឺសំឡេងពី ${remoteId} លើ Speaker!`);
+            }).catch(err => {
+                addLog(`សំឡេងត្រូវបានផ្អាកដោយ Browser — សូមចុច "🔊 ចុចបើកសំឡេង & តេស្តកណ្ដឹង"!`);
+            });
+            updatePeersUI();
+        });
+
+        call.on('close', () => {
+            connectedMap.delete(remoteId);
+            const audioEl = document.getElementById('audio_' + remoteId);
+            if (audioEl) audioEl.remove();
+            addLog(`បានផ្ដាច់ការតភ្ជាប់ជាមួយ ${remoteId}`);
+            updatePeersUI();
+        });
+
+        call.on('error', (err) => {
+            addLog(`កំហុស Call ជាមួយ ${remoteId}: ` + err);
+        });
+    }
+
+    function startSpeech(e) {
+        if (e) e.preventDefault();
+        if (selectedRole !== 'sender' || !rawMicStream || isSpeaking) return;
+
+        isSpeaking = true;
+        playAirportChime(true);
+
+        // បើកមីក្រូហ្វូនភ្លាមៗ (កាត់បន្ថយការរង់ចាំ ដើម្បីកុំឱ្យបាត់សំឡេងពេលនិយាយ)
+        setTimeout(() => {
+            if (isSpeaking && rawMicStream) {
+                rawMicStream.getAudioTracks()[0].enabled = true;
+                addLog('មីក្រូហ្វូនបានបើក — កំពុងនិយាយ...');
+            }
+        }, 350);
+
+        const btn = document.getElementById('talkBtn');
+        btn.classList.add('speaking');
+        btn.innerHTML = '🔊 កំពុងនិយាយ...';
+    }
+
+    function stopSpeech(e) {
+        if (e) e.preventDefault();
+        if (selectedRole !== 'sender' || !rawMicStream || !isSpeaking) return;
+
+        isSpeaking = false;
+        rawMicStream.getAudioTracks()[0].enabled = false;
+        addLog('បានបិទមីក្រូហ្វូន។');
+
+        const btn = document.getElementById('talkBtn');
+        btn.classList.remove('speaking');
+        btn.innerHTML = '✈️ ចុចនិយាយ<br><span style="font-size: 11px; font-weight: normal;">(Hold to Speak)</span>';
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (selectedRole === 'sender' && e.code === 'Space' && document.getElementById('radioBox').style.display !== 'none' && document.activeElement.tagName !== 'INPUT') {
+            e.preventDefault();
+            startSpeech();
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        if (selectedRole === 'sender' && e.code === 'Space' && document.getElementById('radioBox').style.display !== 'none' && document.activeElement.tagName !== 'INPUT') {
+            e.preventDefault();
+            stopSpeech();
+        }
+    });
+</script>
+
+</body>
+</html>

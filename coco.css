@@ -1,0 +1,110 @@
+ * {
+            box-sizing: border-box;
+            font-family: 'Kantumruy Pro', 'Segoe UI', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: #1e293b;
+            color: #f8fafc;
+            margin: 0;
+            padding: 20px 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: #0f172a;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            padding: 25px;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+        h2 {
+            color: #38bdf8;
+            margin-top: 0;
+            font-size: 21px;
+        }
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 14px;
+            padding: 18px;
+            margin-top: 15px;
+            text-align: left;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: white;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        button.action-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #0ea5e9;
+            color: white;
+            transition: 0.2s;
+        }
+        button.action-btn:hover {
+            background: #0284c7;
+        }
+        .btn-talk {
+            width: 145px;
+            height: 145px;
+            border-radius: 75px;
+            border: none;
+            background: #ef4444;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+            cursor: pointer;
+            user-select: none;
+            margin: 20px auto 10px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: transform 0.05s, background-color 0.2s;
+        }
+        .btn-talk.speaking {
+            background: #22c55e !important;
+            box-shadow: 0 10px 25px rgba(34, 197, 94, 0.4);
+            transform: scale(0.95);
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .status-off { background: #7f1d1d; color: #fca5a5; }
+        .status-on { background: #14532d; color: #86efac; }
+        .log-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 10px;
+            height: 90px;
+            overflow-y: auto;
+            font-size: 12px;
+            text-align: left;
+            color: #94a3b8;
+            margin-top: 10px;
+        }
